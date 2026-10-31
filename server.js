@@ -31,6 +31,64 @@ const NATIVE_API_BASE = 'https://api3.aoneroom.com';
 const BOOTSTRAP_URL = 'https://apig.inmoviebox.com/wefeed-mobile-bff/tab/ranking-list?tabId=0&categoryType=4516404531735022304&page=1&perPage=1';
 const WEB_DOMAINS = ['https://123moviesfree.club', 'https://movie-box.co', 'https://movieboxonline.net', 'https://sflix.film', 'https://h5-api.aoneroom.com', 'https://netnaija.film', 'https://movieboxhd.net'];
 
+async function proxyRemoteResponse(req, res, targetUrl, fallbackMime = 'application/octet-stream') {
+  if (!targetUrl) {
+    return res.status(400).json({ error: 'Missing url' });
+  }
+
+  try {
+    const upstream = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': WEB_USER_AGENT,
+        Accept: '*/*',
+        Referer: 'https://moviebox.ph/',
+      },
+      redirect: 'follow',
+    });
+
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `Stream fetch failed: ${upstream.status}` });
+    }
+
+    const contentType = upstream.headers.get('content-type') || fallbackMime;
+    const contentLength = upstream.headers.get('content-length');
+    const contentDisposition = upstream.headers.get('content-disposition');
+
+    res.status(200);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'no-store');
+
+    if (contentLength) {
+      res.setHeader('Content-Length', contentLength);
+    }
+
+    if (contentDisposition) {
+      res.setHeader('Content-Disposition', contentDisposition);
+    }
+
+    if (!upstream.body) {
+      return res.end();
+    }
+
+    return upstream.body.pipe(res);
+  } catch (error) {
+    console.error('proxyRemoteResponse failed:', error);
+    return res.status(500).json({ error: 'Failed to proxy remote source' });
+  }
+}
+
+app.get('/api/proxy/stream', async (req, res) => {
+  const targetUrl = req.query.url;
+  return proxyRemoteResponse(req, res, targetUrl, 'video/mp4');
+});
+
+app.get('/api/proxy/caption', async (req, res) => {
+  const targetUrl = req.query.url;
+  return proxyRemoteResponse(req, res, targetUrl, 'text/vtt');
+});
+
 function b64Decode(value) {
   const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
   const pad = '='.repeat((4 - (normalized.length % 4)) % 4);

@@ -22,6 +22,12 @@ function formatQuality(value) {
   return value.includes('p') ? value : `${value}p`;
 }
 
+function getPlayableStream(streams) {
+  const directMp4 = streams.find((stream) => (stream.format || '').toUpperCase() === 'MP4' || stream.url?.endsWith('.mp4'));
+  if (directMp4) return directMp4;
+  return streams[0] || null;
+}
+
 function renderResults(items) {
   resultsGrid.innerHTML = '';
 
@@ -80,14 +86,14 @@ async function selectMovie(subjectId) {
       videoPlayer.poster = detail.cover;
     }
 
-    const streams = streamRes.streams || [];
-    const trackOptions = await fetchJson(`/api/stream/${subjectId}/captions`)
-      .catch(() => ({ captions: [] }));
+    const streams = (streamRes.streams || []).filter((stream) => !stream.url?.includes('.m3u8'));
+    const playable = getPlayableStream(streams);
+    const captionsData = await fetchJson(`/api/stream/${subjectId}/captions`).catch(() => ({ captions: [] }));
 
     subtitleSelect.innerHTML = '<option value="">Subtitles Off</option>';
-    (trackOptions.captions || []).forEach((sub) => {
+    (captionsData.captions || []).forEach((sub) => {
       const option = document.createElement('option');
-      option.value = sub.url;
+      option.value = sub.url ? `/api/proxy/caption?url=${encodeURIComponent(sub.url)}` : '';
       option.textContent = `${sub.language} ${sub.code ? `(${sub.code})` : ''}`;
       subtitleSelect.appendChild(option);
     });
@@ -106,19 +112,26 @@ async function selectMovie(subjectId) {
           <small>${stream.source}</small>
         </div>
         <div class="stream-btns">
-          <button class="stream-btn primary" data-url="${stream.url}">Play</button>
-          <a class="stream-btn" href="${stream.url}" target="_blank" rel="noreferrer">Open</a>
+          <button class="stream-btn primary" data-url="${encodeURIComponent(stream.url)}">Play</button>
+          <a class="stream-btn" href="/api/proxy/stream?url=${encodeURIComponent(stream.url)}" target="_blank" rel="noreferrer">Open</a>
         </div>
       `;
 
       item.querySelector('.stream-btn.primary').addEventListener('click', () => {
-        const url = stream.url;
-        videoPlayer.src = url;
+        const proxyUrl = `/api/proxy/stream?url=${encodeURIComponent(stream.url)}`;
+        videoPlayer.src = proxyUrl;
+        videoPlayer.load();
         videoPlayer.play().catch(() => {});
       });
 
       streamList.appendChild(item);
     });
+
+    if (playable) {
+      const proxyUrl = `/api/proxy/stream?url=${encodeURIComponent(playable.url)}`;
+      videoPlayer.src = proxyUrl;
+      videoPlayer.load();
+    }
 
     const oldList = document.querySelector('.stream-list');
     if (oldList) oldList.remove();
@@ -167,5 +180,6 @@ document.querySelectorAll('.chip').forEach((chip) => {
   });
 });
 
+videoPlayer.crossOrigin = 'anonymous';
 loadSearch('Avatar');
 selectMovie(defaultSubjectId);

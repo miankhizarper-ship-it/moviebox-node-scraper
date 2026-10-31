@@ -68,11 +68,8 @@ async function proxyRemoteResponse(req, res, targetUrl, fallbackMime = 'applicat
       res.setHeader('Content-Disposition', contentDisposition);
     }
 
-    if (!upstream.body) {
-      return res.end();
-    }
-
-    return upstream.body.pipe(res);
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    return res.send(buffer);
   } catch (error) {
     console.error('proxyRemoteResponse failed:', error);
     return res.status(500).json({ error: 'Failed to proxy remote source' });

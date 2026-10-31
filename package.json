@@ -1,0 +1,15 @@
+{
+  "name": "moviebox-node-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MovieBox scraper and API implemented in Node.js for Vercel deployment",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

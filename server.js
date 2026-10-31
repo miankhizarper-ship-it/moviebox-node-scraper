@@ -1,7 +1,12 @@
 import express from 'express';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -14,6 +19,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.use('/demo', express.static(path.join(__dirname, 'demo-website')));
 
 const SECRET_KEY_DEFAULT_B64 = 'NzZpUmwwN3MweFNOOWpxbUVXQXQ3OUVCSlp1bElRSXNWNjRGWnIyTw==';
 const SECRET_KEY_ALT_B64 = 'WHFuMm5uTzQxL0w5Mm8xaXVYaFNMSFRiWHZZNFo1Wlo2Mm04bVNMQQ==';
@@ -72,8 +79,8 @@ function getSecretBytes(useAlt = false) {
 
 function buildCanonicalString(method, accept, contentType, url, body, timestamp) {
   const parsed = new URL(url);
-  const path = parsed.pathname || '/';
-  let canonicalUrl = path;
+  const pathName = parsed.pathname || '/';
+  let canonicalUrl = pathName;
 
   if (parsed.search) {
     const pairs = [];
@@ -83,7 +90,7 @@ function buildCanonicalString(method, accept, contentType, url, body, timestamp)
       pairs.push([key, rawValue]);
     }
     pairs.sort(([a], [b]) => a.localeCompare(b));
-    canonicalUrl = `${path}?${pairs.map(([k, v]) => `${k}=${v}`).join('&')}`;
+    canonicalUrl = `${pathName}?${pairs.map(([k, v]) => `${k}=${v}`).join('&')}`;
   }
 
   const bodyBytes = body ? Buffer.from(body, 'utf8') : null;
@@ -526,19 +533,7 @@ class MovieBoxEngine {
 const engine = new MovieBoxEngine();
 
 app.get('/', (req, res) => {
-  res.send(`
-    <html>
-      <body style="font-family: sans-serif; background:#0f172a; color:#fff; padding:40px;">
-        <h1>MovieBox API</h1>
-        <p>Node.js Vercel version is running.</p>
-        <ul>
-          <li><a href="/search?q=Avatar" style="color:#7dd3fc">/search?q=Avatar</a></li>
-          <li><a href="/detail/8906247916759695608" style="color:#7dd3fc">/detail/:id</a></li>
-          <li><a href="/api/stream/8906247916759695608" style="color:#7dd3fc">/api/stream/:id</a></li>
-        </ul>
-      </body>
-    </html>
-  `);
+  res.redirect('/demo');
 });
 
 app.get('/search', async (req, res) => {

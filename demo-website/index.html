@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieBox Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">M</div>
+          <div>
+            <p class="eyebrow">Demo</p>
+            <h1>MovieBox</h1>
+          </div>
+        </div>
+
+        <label class="search-wrap">
+          <span>Search</span>
+          <input id="searchInput" type="text" value="Avatar" placeholder="Search movie or series" />
+        </label>
+
+        <button id="searchBtn" class="primary-btn">Search</button>
+
+        <div class="mini-meta">
+          <p>Trending</p>
+          <div class="chip-row">
+            <button class="chip active" data-query="Avatar">Avatar</button>
+            <button class="chip" data-query="Breaking Bad">Breaking Bad</button>
+            <button class="chip" data-query="Spider Man">Spider Man</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="playerSection" class="player-section">
+          <video id="videoPlayer" controls playsinline poster=""></video>
+          <div class="player-panel">
+            <div>
+              <p id="metaSmall" class="meta-small">Ready to stream</p>
+              <h2 id="movieTitle">Select a movie</h2>
+            </div>
+            <div class="player-actions">
+              <select id="subtitleSelect" aria-label="Subtitles">
+                <option value="">Subtitles Off</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="results-panel">
+          <div class="section-head">
+            <h3>Results</h3>
+            <span id="resultCount">0</span>
+          </div>
+          <div id="resultsGrid" class="results-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
